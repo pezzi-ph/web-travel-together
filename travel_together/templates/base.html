@@ -1,0 +1,11 @@
+<nav>
+    <a href="{{ url_for('main.index') }}">Home</a>
+    {% if current_user.is_authenticated %}
+    <form action="{{ url_for('auth.logout') }}" method="post" style="display:inline">
+        <button type="submit">Log out</button>
+    </form>
+    {% else %}
+    <a href="{{ url_for('auth.login') }}">Log in</a>
+    <a href="{{ url_for('auth.register') }}">Sign up</a>
+    {% endif %}
+</nav>
