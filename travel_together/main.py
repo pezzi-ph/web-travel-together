@@ -1,14 +1,10 @@
-import datetime
-import dateutil.tz
-
 from flask import Blueprint, render_template
+from flask_login import login_required, current_user
 
-
-from . import model
-
-bp = Blueprint("main", __name__)
+bp = Blueprint("main", __name__, url_prefix="/")
 
 
 @bp.route("/")
+@login_required
 def index():
-    return render_template("main/index.html")
+    return render_template("main/index.html", user=current_user)

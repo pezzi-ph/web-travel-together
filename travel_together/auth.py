@@ -1,60 +1,57 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_user, logout_user, login_required, current_user
+from flask import Blueprint, render_template, redirect, url_for, request, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, logout_user, login_required
 from . import db
 from .model import User
 
-bp = Blueprint("auth", __name__, template_folder="templates")
+bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-@bp.get("/register")
+
+@bp.route("/register", methods=["GET", "POST"])
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
-    return render_template("auth/register.html")
+    if request.method == "POST":
+        email = request.form["email"]
+        name = request.form["name"]
+        password = request.form["password"]
 
-@bp.post("/register")
-def register_post():
-    email = request.form.get("email", "").strip().lower()
-    name = request.form.get("name", "").strip()
-    password = request.form.get("password", "")
+        existing = User.query.filter_by(email=email).first()
+        if existing:
+            flash("Email already registered.")
+            return redirect(url_for("auth.register"))
 
-    # basic validation
-    if not email or not name or not password:
-        flash("All fields are required.")
-        return redirect(url_for("auth.register"))
-
-    # unique email
-    if db.session.execute(db.select(User).where(User.email == email)).scalar():
-        flash("Email already registered.")
-        return redirect(url_for("auth.register"))
-
-    user = User(email=email, name=name)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
-    flash("Account created! You can now log in.")
-    return redirect(url_for("auth.login"))
-
-@bp.get("/login")
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
-    return render_template("auth/login.html")
-
-@bp.post("/login")
-def login_post():
-    email = request.form.get("email", "").strip().lower()
-    password = request.form.get("password", "")
-
-    user = db.session.execute(db.select(User).where(User.email == email)).scalar()
-    if not user or not user.check_password(password):
-        flash("Invalid email or password.")
+        new_user = User(
+            email=email,
+            name=name,
+            password_hash=generate_password_hash(password),
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        flash("Account created! Please log in.")
         return redirect(url_for("auth.login"))
 
-    login_user(user)
-    return redirect(url_for("main.index"))
+    return render_template("auth/register.html")
 
-@bp.post("/logout")
+
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(email=email).first()
+        if not user or not check_password_hash(user.password_hash, password):
+            flash("Invalid credentials.")
+            return redirect(url_for("auth.login"))
+
+        login_user(user)
+        return redirect(url_for("main.index"))
+
+    return render_template("auth/login.html")
+
+
+@bp.route("/logout", methods=["GET"])
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("main.index"))
+    flash("You've been logged out.")
+    return redirect(url_for("auth.login"))
