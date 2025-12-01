@@ -1,0 +1,20 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="page-section">
+    <h1>{{ user.name }}</h1>
+    <p class="muted">{{ user.email }}</p>
+
+    {% if user.bio %}
+    <p>{{ user.bio }}</p>
+    {% else %}
+    <p class="muted">This user hasn't written a bio yet.</p>
+    {% endif %}
+
+    {% if current_user.is_authenticated and current_user.id == user.id %}
+    <a href="{{ url_for('main.edit_profile', user_id=user.id) }}" class="button primary">
+        Edit profile
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
