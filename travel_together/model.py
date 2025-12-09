@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import List
+
 from flask_login import UserMixin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, Enum
@@ -42,9 +44,20 @@ class Location(db.Model):
 
 
 # -------------------------
+# ACTIVITY
+# -------------------------
+class Activity(db.Model):
+    id = mapped_column(Integer, primary_key=True)
+    name = mapped_column(String(120), nullable=False)
+    trip_id: Mapped[int] = mapped_column(ForeignKey("tripproposal.id"))
+    trip: Mapped["TripProposal"] = relationship("TripProposal", back_populates="activities", foreign_keys=[trip_id])
+
+
+# -------------------------
 # TRIP
 # -------------------------
 class TripProposal(db.Model):
+    __tablename__ = 'tripproposal'
     id = mapped_column(Integer, primary_key=True)
     name = mapped_column(String(120))
     budget = mapped_column(Integer)
@@ -57,6 +70,8 @@ class TripProposal(db.Model):
     departure_location = relationship("Location", foreign_keys=[departure_id])
     destination_location = relationship("Location", foreign_keys=[destination_id])
 
+    activities: Mapped[list["Activity"]] = relationship("Activity", back_populates="trip")
+
     participants = relationship("TripProposalParticipant", back_populates="trip")
 
 
@@ -67,7 +82,7 @@ class TripProposalParticipant(db.Model):
     id = mapped_column(Integer, primary_key=True)
 
     user_id = mapped_column(ForeignKey("user.id"))
-    trip_id = mapped_column(ForeignKey("trip_proposal.id"))
+    trip_id = mapped_column(ForeignKey("tripproposal.id"))
 
     can_edit = mapped_column(Boolean, default=False)
 

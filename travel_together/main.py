@@ -15,7 +15,7 @@ from .model import (
     TripProposal,
     TripProposalParticipant,
     Location,
-    ProposalStatus,
+    ProposalStatus, Activity,
 )
 
 bp = Blueprint("main", __name__)
@@ -87,6 +87,11 @@ def create_trip():
         destination = request.form.get("destination")
         budget = request.form.get("budget")
         max_members = request.form.get("max_members")
+        activities = request.form.getlist("activities[]")
+
+        activies_new = []
+        for activity in activities:
+            activies_new.append(Activity(name=activity))
 
         # Validate fields
         if not name or not departure or not destination:
@@ -113,6 +118,7 @@ def create_trip():
             budget=int(budget) if budget else 0,
             max_members=int(max_members),
             status=ProposalStatus.open,
+            activities=activies_new,
         )
         db.session.add(trip)
         db.session.commit()

@@ -13,7 +13,7 @@
             <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">
                 {{ trip.name }}
             </a>
-            – {{ trip.destination.name if trip.destination else "No destination yet" }}
+            – {{ trip.destination_location.name if trip.destination_location else "No destination yet" }}
             (max {{ trip.max_members }} people)
         </li>
         {% endfor %}
