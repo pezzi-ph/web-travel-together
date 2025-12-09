@@ -34,6 +34,9 @@ class User(UserMixin, db.Model):
 
     participants: Mapped[List["TripProposalParticipant"]] = relationship("TripProposalParticipant", back_populates="user")
 
+    messages: Mapped[List["Message"]] = relationship("Message", back_populates="user")
+
+
 
 # -------------------------
 # LOCATION
@@ -74,6 +77,9 @@ class TripProposal(db.Model):
 
     participants = relationship("TripProposalParticipant", back_populates="trip")
 
+    messages: Mapped[List["Message"]] = relationship("Message", back_populates="trip")
+
+
 
 # -------------------------
 # PARTICIPANTS
@@ -88,3 +94,19 @@ class TripProposalParticipant(db.Model):
 
     user = relationship("User", back_populates="participants")
     trip = relationship("TripProposal", back_populates="participants")
+
+
+# -------------------------
+# MESSAGE
+# -------------------------
+class Message(db.Model):
+    id = mapped_column(Integer, primary_key=True)
+    text = mapped_column(String(120), nullable=False)
+    created_at = mapped_column(DateTime, default=datetime.now())
+
+
+    user_id = mapped_column(ForeignKey("user.id"))
+    trip_id = mapped_column(ForeignKey("tripproposal.id"))
+
+    user = relationship("User", back_populates="messages")
+    trip = relationship("TripProposal", back_populates="messages")

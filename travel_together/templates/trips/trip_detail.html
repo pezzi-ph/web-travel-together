@@ -22,7 +22,8 @@
 </form>
 {% elif can_edit %}
 <a href="{{ url_for('main.edit_trip', trip_id=trip.id) }}">Edit</a>
-{% else %}
-<p>You cannot join this trip anymore.</p>
+{% endif %}{% if is_participant %}
+<p>You already joined this trip.</p>
+<a href="{{ url_for('main.chat_trip', trip_id=trip.id) }}">Chat with the others</a>
 {% endif %}
 {% endblock %}

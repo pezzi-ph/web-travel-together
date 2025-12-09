@@ -15,7 +15,7 @@ from .model import (
     TripProposal,
     TripProposalParticipant,
     Location,
-    ProposalStatus, Activity,
+    ProposalStatus, Activity, Message,
 )
 
 bp = Blueprint("main", __name__)
@@ -275,3 +275,19 @@ def edit_trip(trip_id):
 
     return render_template("trips/create_trip.html", trip=trip)
 
+# ---------------------------------------------------------
+# TRIP Chat
+# ---------------------------------------------------------
+@bp.route("/trips/<int:trip_id>/chat", methods=["GET", "POST"])
+@login_required
+def chat_trip(trip_id):
+    trip = TripProposal.query.get_or_404(trip_id)
+    if not any(p.user_id == current_user.id for p in trip.participants):
+        flash("You are not participating in this trip.")
+        return index()
+    if request.method == "POST":
+        messageText = request.form.get("message")
+        message = Message(text=messageText, trip_id=trip_id, user_id=current_user.id)
+        db.session.add(message)
+        db.session.commit()
+    return render_template("trips/message_board.html", messages=trip.messages)
