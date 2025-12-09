@@ -15,7 +15,7 @@ from .model import (
     TripProposal,
     TripProposalParticipant,
     Location,
-    ProposalStatus, Activity, Message,
+    ProposalStatus, Activity, Message, PossibleDates,
 )
 
 bp = Blueprint("main", __name__)
@@ -88,6 +88,15 @@ def create_trip():
         budget = request.form.get("budget")
         max_members = request.form.get("max_members")
         activities = request.form.getlist("activities[]")
+        possible_departure_dates = request.form.getlist("possible_departure_dates[]")
+        possible_return_dates = request.form.getlist("possible_return_dates[]")
+
+        new_dates = []
+        for i, departure_date in enumerate(possible_departure_dates):
+            if departure_date > possible_return_dates[i]:
+                flash("Departure date cannot be after return date.")
+                return redirect(url_for("main.create_trip"))
+            new_dates.append(PossibleDates(departure_date=departure_date, return_date=possible_return_dates[i]))
 
         activities_new = []
         for activity in activities:
@@ -121,6 +130,7 @@ def create_trip():
             max_members=int(max_members),
             status=ProposalStatus.open,
             activities=activities_new,
+            possible_dates=new_dates,
         )
         db.session.add(trip)
         db.session.commit()
@@ -240,6 +250,17 @@ def edit_trip(trip_id):
         budget = request.form.get("budget")
         max_members = request.form.get("max_members")
         activities = request.form.getlist("activities[]")
+        possible_departure_dates = request.form.getlist("possible_departure_dates[]")
+        possible_return_dates = request.form.getlist("possible_return_dates[]")
+
+        new_dates = []
+        for i, departure_date in enumerate(possible_departure_dates):
+            if departure_date > possible_return_dates[i]:
+                flash("Departure date cannot be after return date.")
+                return redirect(url_for("main.create_trip"))
+            new_dates.append(PossibleDates(departure_date=departure_date, return_date=possible_return_dates[i]))
+
+
 
         activities_new = []
         for activity in activities:
@@ -270,6 +291,7 @@ def edit_trip(trip_id):
         trip.budget = budget
         trip.max_members = max_members
         trip.activities = activities_new
+        trip.possible_dates = new_dates
         db.session.commit()
         flash("Trip edited successfully!")
 

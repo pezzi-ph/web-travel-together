@@ -79,6 +79,8 @@ class TripProposal(db.Model):
 
     messages: Mapped[List["Message"]] = relationship("Message", back_populates="trip")
 
+    possible_dates: Mapped[List["PossibleDates"]] = relationship("PossibleDates", back_populates="trip")
+
 
 
 # -------------------------
@@ -110,3 +112,15 @@ class Message(db.Model):
 
     user = relationship("User", back_populates="messages")
     trip = relationship("TripProposal", back_populates="messages")
+
+
+# -------------------------
+# DATES
+# -------------------------
+class PossibleDates(db.Model):
+    id = mapped_column(Integer, primary_key=True)
+    departure_date = mapped_column(DateTime)
+    return_date = mapped_column(DateTime)
+
+    trip_id = mapped_column(ForeignKey("tripproposal.id"))
+    trip = relationship("TripProposal", back_populates="possible_dates")

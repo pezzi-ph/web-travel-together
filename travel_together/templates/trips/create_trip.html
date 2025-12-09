@@ -3,6 +3,11 @@
         document.getElementById("activities")
             .insertAdjacentHTML("beforeend", '<div class="row"><input type="text" name="activities[]"><button type="button" onclick="remove(this)">-</button></div>');
     }
+        function addDates() {
+        document.getElementById("dates")
+            .insertAdjacentHTML("beforeend", '<div class="row"><input type="datetime-local" name="possible_departure_dates[]"><input type="datetime-local" name="possible_return_dates[]"><button type="button" onclick="remove(this)">-</button></div>');
+    }
+
     function remove(x){
         x.parentElement.remove();
     }
@@ -68,8 +73,33 @@
         <button type="button" onclick="add()">Add activity</button>
 
 
+
+        <div class="form-group" id="dates">
+            <label for="dates">Possible Dates</label>
+            {% if trip.possible_dates |length ==0 %}
+                <div class="row">
+                    <input type="datetime-local" name="possible_departure_dates[]">
+                    <input type="datetime-local" name="possible_return_dates[]">
+                    <button type="button" onclick="remove(this)">-</button>
+                </div>
+            {% endif %}
+            {% for date in trip.possible_dates %}
+                <div class="row">
+                    <input type="datetime-local" name="possible_departure_dates[]" value="{{ date.departure_date }}">
+                    <input type="datetime-local" name="possible_return_dates[]" value="{{ date.return_date }}">
+                    <button type="button" onclick="remove(this)">-</button>
+                </div>
+            {% endfor %}
+
+        </div>
+        <button type="button" onclick="addDates()">Add possible dates</button>
+
+
         <button type="submit">{% if trip.id is none %}Create trip{% else %}Edit trip{% endif %}</button>
     </form>
+
+
+
 
     <p>
         <a href="{{ url_for('main.index') }}">← Back to all trips</a>
