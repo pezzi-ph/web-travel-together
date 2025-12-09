@@ -87,3 +87,8 @@ button {
 .content a {
     color: #8B1E3F;
 }
+
+.row {
+  display:flex;
+  gap:10px;
+}

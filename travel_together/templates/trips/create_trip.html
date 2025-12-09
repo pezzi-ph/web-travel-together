@@ -1,8 +1,11 @@
 ﻿<script>
-function add() {
-  document.getElementById("activities")
-    .insertAdjacentHTML("beforeend", '<input type="text" name="activities[]">');
-}
+    function add() {
+        document.getElementById("activities")
+            .insertAdjacentHTML("beforeend", '<div class="row"><input type="text" name="activities[]"><button type="button" onclick="remove(this)">-</button></div>');
+    }
+    function remove(x){
+        x.parentElement.remove();
+    }
 </script>
 
 {% extends "base.html" %}
@@ -10,52 +13,66 @@ function add() {
 {% block title %}Create a new trip – TasteTogether{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Create a new food trip</h1>
-    <p class="subtitle">
-        Plan a TasteTogether adventure with other food lovers.
+    <div class="page-header">
+        <h1>Create a new food trip</h1>
+        <p class="subtitle">
+            Plan a TasteTogether adventure with other food lovers.
+        </p>
+    </div>
+
+    <form method="post" class="form-card">
+        <div class="form-group">
+            <label for="name">Trip name</label>
+            <input type="text" id="name" name="name" value="{{ trip.name or "" }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="departure">Departure city</label>
+            <input type="text" id="departure" name="departure" value="{{ trip.departure_location.name or "" }}"
+                   required>
+        </div>
+
+        <div class="form-group">
+            <label for="destination">Destination city</label>
+            <input type="text" id="destination" name="destination" value="{{ trip.destination_location.name or "" }}"
+                   required>
+        </div>
+
+        <div class="form-group">
+            <label for="budget">Approx. budget (EUR)</label>
+            <input type="number" id="budget" name="budget" min="0" step="50" value="{{ trip.budget or 0 }}">
+        </div>
+
+        <div class="form-group">
+            <label for="max_members">Maximum participants</label>
+            <input type="number" id="max_members" name="max_members" min="1" value="{{ trip.max_members or 0 }}"
+                   required>
+        </div>
+
+
+        <div class="form-group" id="activities">
+            <label for="activities">Activities</label>
+            {% if trip.activities |length ==0 %}
+                <div class="row">
+                    <input type="text" name="activities[]">
+                    <button type="button" onclick="remove(this)">-</button>
+                </div>            {% endif %}
+            {% for act in trip.activities %}
+                <div class="row">
+                    <input type="text" name="activities[]" value="{{ act.name }}">
+                    <button type="button" onclick="remove(this)">-</button>
+                </div>
+            {% endfor %}
+
+        </div>
+        <button type="button" onclick="add()">Add activity</button>
+
+
+        <button type="submit">{% if trip.id is none %}Create trip{% else %}Edit trip{% endif %}</button>
+    </form>
+
+    <p>
+        <a href="{{ url_for('main.index') }}">← Back to all trips</a>
     </p>
-</div>
-
-<form method="post" class="form-card">
-    <div class="form-group">
-        <label for="name">Trip name</label>
-        <input type="text" id="name" name="name" required>
-    </div>
-
-    <div class="form-group">
-        <label for="departure">Departure city</label>
-        <input type="text" id="departure" name="departure" required>
-    </div>
-
-    <div class="form-group">
-        <label for="destination">Destination city</label>
-        <input type="text" id="destination" name="destination" required>
-    </div>
-
-    <div class="form-group">
-        <label for="budget">Approx. budget (EUR)</label>
-        <input type="number" id="budget" name="budget" min="0" step="50">
-    </div>
-
-    <div class="form-group">
-        <label for="max_members">Maximum participants</label>
-        <input type="number" id="max_members" name="max_members" min="1" required>
-    </div>
-
-
-    <div class="form-group" id="activities">
-        <label for="activities">Activities</label>
-        <input type="text" name="activities[]">
-    </div>
-    <button type="button" onclick="add()">Add activity</button>
-
-
-    <button type="submit">Create trip</button>
-</form>
-
-<p>
-    <a href="{{ url_for('main.index') }}">← Back to all trips</a>
-</p>
 {% endblock %}
 

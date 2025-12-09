@@ -89,9 +89,11 @@ def create_trip():
         max_members = request.form.get("max_members")
         activities = request.form.getlist("activities[]")
 
-        activies_new = []
+        activities_new = []
         for activity in activities:
-            activies_new.append(Activity(name=activity))
+            if len(activity) < 1:
+                continue
+            activities_new.append(Activity(name=activity))
 
         # Validate fields
         if not name or not departure or not destination:
@@ -118,7 +120,7 @@ def create_trip():
             budget=int(budget) if budget else 0,
             max_members=int(max_members),
             status=ProposalStatus.open,
-            activities=activies_new,
+            activities=activities_new,
         )
         db.session.add(trip)
         db.session.commit()
@@ -135,7 +137,7 @@ def create_trip():
         flash("Trip created successfully!")
         return redirect(url_for("main.trip_detail", trip_id=trip.id))
 
-    return render_template("trips/create_trip.html")
+    return render_template("trips/create_trip.html", trip=TripProposal())
 
 
 # ---------------------------------------------------------
@@ -148,6 +150,8 @@ def trip_detail(trip_id):
 
     # Check if user is participant
     is_participant = any(p.user_id == current_user.id for p in trip.participants)
+
+    can_edit = any(p.user_id == current_user.id and p.can_edit for p in trip.participants)
 
     # Check capacity
     current_count = len(trip.participants)
@@ -165,6 +169,7 @@ def trip_detail(trip_id):
         is_participant=is_participant,
         is_full=is_full,
         can_join=can_join,
+        can_edit=can_edit
     )
 
 
@@ -206,3 +211,67 @@ def join_trip(trip_id):
 
     flash("You joined the trip!")
     return redirect(url_for("main.trip_detail", trip_id=trip.id))
+
+
+
+
+
+
+
+
+# ---------------------------------------------------------
+# Edit A TRIP
+# ---------------------------------------------------------
+@bp.route("/trips/<int:trip_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_trip(trip_id):
+    stmt = db.select(TripProposalParticipant).where(TripProposalParticipant.trip_id == trip_id, TripProposalParticipant.user_id == current_user.id)
+    participant = db.session.execute(stmt).scalar()
+    if participant is None or not participant.can_edit:
+        flash("You are not allowed to edit this trip.")
+        return index()
+
+    trip = TripProposal.query.get_or_404(trip_id)
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        departure = request.form.get("departure")
+        destination = request.form.get("destination")
+        budget = request.form.get("budget")
+        max_members = request.form.get("max_members")
+        activities = request.form.getlist("activities[]")
+
+        activities_new = []
+        for activity in activities:
+            if len(activity) < 1:
+                continue
+            act = Activity.query.filter_by(name=activity, trip_id=trip_id).first()
+            activities_new.append(act or Activity(name=activity, trip_id=trip_id))
+
+        # Validate fields
+        if not name or not departure or not destination:
+            flash("Name, departure, and destination are required.")
+            return redirect(url_for("main.create_trip"))
+
+        # Create or get departure location
+        dep_loc = Location.query.filter_by(name=departure).first()
+        if not dep_loc:
+            dep_loc = Location(name=departure)
+            db.session.add(dep_loc)
+
+        # Create or get destination location
+        dest_loc = Location.query.filter_by(name=destination).first()
+        if not dest_loc:
+            dest_loc = Location(name=destination)
+            db.session.add(dest_loc)
+        trip.name = name
+        trip.departure_location = dep_loc
+        trip.destination_location = dest_loc
+        trip.budget = budget
+        trip.max_members = max_members
+        trip.activities = activities_new
+        db.session.commit()
+        flash("Trip edited successfully!")
+
+    return render_template("trips/create_trip.html", trip=trip)
+

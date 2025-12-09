@@ -32,7 +32,7 @@ class User(UserMixin, db.Model):
     created_at = mapped_column(DateTime, default=datetime.utcnow)
     updated_at = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    participants = relationship("TripProposalParticipant", back_populates="user")
+    participants: Mapped[List["TripProposalParticipant"]] = relationship("TripProposalParticipant", back_populates="user")
 
 
 # -------------------------
@@ -70,7 +70,7 @@ class TripProposal(db.Model):
     departure_location = relationship("Location", foreign_keys=[departure_id])
     destination_location = relationship("Location", foreign_keys=[destination_id])
 
-    activities: Mapped[list["Activity"]] = relationship("Activity", back_populates="trip")
+    activities: Mapped[list["Activity"]] = relationship("Activity", back_populates="trip", cascade="all, delete-orphan", single_parent=True,)
 
     participants = relationship("TripProposalParticipant", back_populates="trip")
 

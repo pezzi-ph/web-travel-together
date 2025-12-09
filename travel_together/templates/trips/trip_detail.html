@@ -8,12 +8,21 @@
 <p><strong>Budget:</strong> ${{ trip.budget }}</p>
 <p><strong>Max Members:</strong> {{ trip.max_members }}</p>
 <p><strong>Current Members:</strong> {{ trip.participants|length }}</p>
+<p><strong>Activities:</strong></p>
+<ul>
+{% for activity in trip.activities %}
+    <li>{{ activity.name }}</li>
+{% endfor %}
+</ul>
+
 
 {% if can_join %}
 <form action="{{ url_for('main.join_trip', trip_id=trip.id) }}" method="POST">
     <button type="submit">Join Trip</button>
 </form>
+{% elif can_edit %}
+<a href="{{ url_for('main.edit_trip', trip_id=trip.id) }}">Edit</a>
 {% else %}
-<p>You cannot join this trip.</p>
+<p>You cannot join this trip anymore.</p>
 {% endif %}
 {% endblock %}
