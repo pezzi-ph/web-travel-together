@@ -1,6 +1,25 @@
 ﻿{% extends "base.html" %}
+
 {% block content %}
-<h1>Welcome, {{ user.name }}!</h1>
-<a class="btn" href="{{ url_for('main.createTrip') }}">Create a Trip</a>
-<p>This will become your trip dashboard.</p>
+<h1>Welcome, {{ current_user.name }}!</h1>
+
+<section class="trip-list">
+    <h2>Open trips</h2>
+
+    {% if trips %}
+    <ul>
+        {% for trip in trips %}
+        <li>
+            <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">
+                {{ trip.name }}
+            </a>
+            – {{ trip.destination.name if trip.destination else "No destination yet" }}
+            (max {{ trip.max_members }} people)
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No trips yet. Why not <a href="{{ url_for('main.create_trip') }}">create one</a>?</p>
+    {% endif %}
+</section>
 {% endblock %}

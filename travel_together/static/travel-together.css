@@ -1,9 +1,10 @@
 /* Global layout */
 body {
-    margin: 0;
+    margin: 2;
     font-family: Arial, sans-serif;
     background-color: #FAF3E0; /* cream */
     color: #2B2B2B;
+
 }
 
 /* Header */

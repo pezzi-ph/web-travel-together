@@ -6,12 +6,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='travel-together.css') }}">
 </head>
 <body>
-    <header class="site-header">
-        <div class="logo">TasteTogether</div>
-        <nav class="main-nav">
+    <header>
+        <h1><a href="{{ url_for('main.index') }}">TasteTogether</a></h1>
+        <nav>
+            <a href="{{ url_for('main.index') }}">All trips</a>
+            <a href="{{ url_for('main.create_trip') }}">Create trip</a>
+
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('main.index') }}">Home</a>
-            <a href="{{ url_for('main.allTrips') }}">All Trips</a>
             <a href="{{ url_for('main.profile', user_id=current_user.id) }}">My profile</a>
             <a href="{{ url_for('auth.logout') }}">Log out</a>
             {% else %}
@@ -21,23 +22,24 @@
         </nav>
     </header>
 
-    <main class="content">
-        {# Flash messages (success / errors) #}
+    <main>
         {% with messages = get_flashed_messages() %}
         {% if messages %}
-        <ul class="flash-messages">
-            {% for m in messages %}
-            <li>{{ m }}</li>
+        <ul class="flashes">
+            {% for msg in messages %}
+            <li>{{ msg }}</li>
             {% endfor %}
         </ul>
         {% endif %}
         {% endwith %}
 
-        {% block content %}{% endblock %}
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
-    <footer class="site-footer">
-        <small>&copy; 2025 TasteTogether</small>
+    <footer>
+        <small>TasteTogether – plan food trips with friends</small>
     </footer>
 </body>
 </html>

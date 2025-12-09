@@ -1,0 +1,19 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ trip.name }}</h2>
+
+<p><strong>Departure:</strong> {{ trip.departure_location.name }}</p>
+<p><strong>Destination:</strong> {{ trip.destination_location.name }}</p>
+<p><strong>Budget:</strong> ${{ trip.budget }}</p>
+<p><strong>Max Members:</strong> {{ trip.max_members }}</p>
+<p><strong>Current Members:</strong> {{ trip.participants|length }}</p>
+
+{% if can_join %}
+<form action="{{ url_for('main.join_trip', trip_id=trip.id) }}" method="POST">
+    <button type="submit">Join Trip</button>
+</form>
+{% else %}
+<p>You cannot join this trip.</p>
+{% endif %}
+{% endblock %}

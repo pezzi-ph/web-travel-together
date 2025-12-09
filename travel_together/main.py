@@ -1,51 +1,202 @@
-from urllib import request
-
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask import (
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    request,
+    abort,
+    flash,
+)
 from flask_login import login_required, current_user
-from .model import *
 
-bp = Blueprint("main", __name__, url_prefix="/")
+from . import db
+from .model import (
+    User,
+    TripProposal,
+    TripProposalParticipant,
+    Location,
+    ProposalStatus,
+)
 
+bp = Blueprint("main", __name__)
 
+# ---------------------------------------------------------
+# HOME PAGE
+# ---------------------------------------------------------
 @bp.route("/")
 @login_required
 def index():
-    return render_template("main/index.html", user=current_user)
-
-@bp.route("/allTrips")
-@login_required
-def allTrips():
-    query = db.select(TripProposal)
-
-    trip_proposals = db.session.execute(query).scalars().all()
-    return render_template("main/landingPage.html", trip_proposals=trip_proposals)
+    trips = db.session.execute(db.select(TripProposal)).scalars().all()
+    return render_template("main/index.html", trips=trips)
 
 
+# ---------------------------------------------------------
+# USER PROFILE
+# ---------------------------------------------------------
 @bp.route("/profile/<int:user_id>")
 @login_required
 def profile(user_id):
-    query = db.select(User).where(User.id == user_id)
-    user = db.session.execute(query).one()
+    user = db.session.get(User, user_id)
+    if user is None:
+        abort(404)
+
     return render_template("user/profile.html", user=user)
 
-@bp.route("/edit_profile")
-@login_required
-def edit_profile():
-    return render_template("user/edit_profile.html", user=current_user)
 
-
-@bp.route("/createTrip", methods=["GET", "POST"])
+# ---------------------------------------------------------
+# EDIT PROFILE
+# ---------------------------------------------------------
+@bp.route("/profile/<int:user_id>/edit", methods=["GET", "POST"])
 @login_required
-def createTrip():
+def edit_profile(user_id):
+    user = db.session.get(User, user_id)
+    if user is None:
+        abort(404)
+
+    # Only the owner can edit
+    if user.id != current_user.id:
+        abort(403)
+
     if request.method == "POST":
-        name = request.form["name"]
-        budget = request.form["budget"]
-        maxMembers = request.form["maxMembers"]
+        name = request.form.get("name", "").strip()
+        bio = request.form.get("bio", "").strip()
 
-        newTrip = TripProposal(name=name, budget=budget, maxMembers=maxMembers, status=ProposalStatus.open, departures_final=False, destination_final=False, possibleDates_final=False, activities_final=False)
-        db.session.add(newTrip)
+        if not name:
+            flash("Name cannot be empty.")
+            return render_template("user/edit_profile.html", user=user)
+
+        user.name = name
+        user.bio = bio
         db.session.commit()
-        flash("trip created successfully")
-        return render_template("main/index.html", user=current_user)
 
-    return render_template("trips/createTrip.html")
+        flash("Profile updated successfully.")
+        return redirect(url_for("main.profile", user_id=user.id))
+
+    return render_template("user/edit_profile.html", user=user)
+
+
+# ---------------------------------------------------------
+# CREATE TRIP PROPOSAL
+# ---------------------------------------------------------
+@bp.route("/trips/new", methods=["GET", "POST"])
+@login_required
+def create_trip():
+    if request.method == "POST":
+        name = request.form.get("name")
+        departure = request.form.get("departure")
+        destination = request.form.get("destination")
+        budget = request.form.get("budget")
+        max_members = request.form.get("max_members")
+
+        # Validate fields
+        if not name or not departure or not destination:
+            flash("Name, departure, and destination are required.")
+            return redirect(url_for("main.create_trip"))
+
+        # Create or get departure location
+        dep_loc = Location.query.filter_by(name=departure).first()
+        if not dep_loc:
+            dep_loc = Location(name=departure)
+            db.session.add(dep_loc)
+
+        # Create or get destination location
+        dest_loc = Location.query.filter_by(name=destination).first()
+        if not dest_loc:
+            dest_loc = Location(name=destination)
+            db.session.add(dest_loc)
+
+        # Create trip
+        trip = TripProposal(
+            name=name,
+            departure_location=dep_loc,
+            destination_location=dest_loc,
+            budget=int(budget) if budget else 0,
+            max_members=int(max_members),
+            status=ProposalStatus.open,
+        )
+        db.session.add(trip)
+        db.session.commit()
+
+        # Add creator as participant (editor)
+        creator = TripProposalParticipant(
+            user=current_user,
+            trip=trip,
+            can_edit=True,
+        )
+        db.session.add(creator)
+        db.session.commit()
+
+        flash("Trip created successfully!")
+        return redirect(url_for("main.trip_detail", trip_id=trip.id))
+
+    return render_template("trips/create_trip.html")
+
+
+# ---------------------------------------------------------
+# TRIP DETAIL PAGE
+# ---------------------------------------------------------
+@bp.route("/trips/<int:trip_id>")
+@login_required
+def trip_detail(trip_id):
+    trip = TripProposal.query.get_or_404(trip_id)
+
+    # Check if user is participant
+    is_participant = any(p.user_id == current_user.id for p in trip.participants)
+
+    # Check capacity
+    current_count = len(trip.participants)
+    is_full = current_count >= trip.max_members
+
+    can_join = (
+        (not is_participant)
+        and (trip.status == ProposalStatus.open)
+        and (not is_full)
+    )
+
+    return render_template(
+        "trips/trip_detail.html",
+        trip=trip,
+        is_participant=is_participant,
+        is_full=is_full,
+        can_join=can_join,
+    )
+
+
+# ---------------------------------------------------------
+# JOIN A TRIP
+# ---------------------------------------------------------
+@bp.route("/trips/<int:trip_id>/join", methods=["POST"])
+@login_required
+def join_trip(trip_id):
+    trip = TripProposal.query.get_or_404(trip_id)
+
+    # Must be open
+    if trip.status != ProposalStatus.open:
+        flash("This trip is not open to new participants.")
+        return redirect(url_for("main.trip_detail", trip_id=trip.id))
+
+    # Already participating?
+    existing = TripProposalParticipant.query.filter_by(
+        trip_id=trip.id, user_id=current_user.id
+    ).first()
+    if existing:
+        flash("You are already participating in this trip.")
+        return redirect(url_for("main.trip_detail", trip_id=trip.id))
+
+    # Check capacity
+    current_count = TripProposalParticipant.query.filter_by(trip_id=trip.id).count()
+    if current_count >= trip.max_members:
+        flash("This trip is full.")
+        return redirect(url_for("main.trip_detail", trip_id=trip.id))
+
+    # Add participant
+    participation = TripProposalParticipant(
+        user=current_user,
+        trip=trip,
+        can_edit=False,
+    )
+    db.session.add(participation)
+    db.session.commit()
+
+    flash("You joined the trip!")
+    return redirect(url_for("main.trip_detail", trip_id=trip.id))
