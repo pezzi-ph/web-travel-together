@@ -1,7 +1,9 @@
+import enum
 from datetime import datetime
 from typing import List
 from flask_login import UserMixin
-from sqlalchemy.orm import Mapped
+from sqlalchemy import Boolean, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from . import db
 
@@ -42,20 +44,28 @@ class Post(db.Model):
 
 
 
+class ProposalStatus(enum.Enum):
+    open = 1
+    closed_to_new_participants = 2
+    finalized = 3
+    cancelled = 4
+
 
 
 class TripProposal(db.Model):
     id: Mapped[int] =db.mapped_column(primary_key=True)
     name: Mapped[str] = db.mapped_column(db.String(64))
+    budget: Mapped[int] =db.mapped_column(db.Integer)
+    maxMembers: Mapped[int] =db.mapped_column(db.Integer)
+    """
     departures: Mapped[List["Location"]] = db.relationship(back_populates="Location")
     destinationId:  Mapped[int] =db.mapped_column(db.ForeignKey("Location.id"))
     destination: Mapped["Location"] = db.relationship(back_populates="Location")
     possibleDates: Mapped[List["DateProposal"]] = db.relationship(back_populates="Location")
-    budget: Mapped[int] =db.mapped_column(db.Integer)
     activities: Mapped[List["Activity"]] = db.relationship(back_populates="Activity")
-    maxMembers: Mapped[int] =db.mapped_column(db.Integer)
-    status: Mapped["ProposalStatus"]
     messages: Mapped[List["Message"]] = db.relationship(back_populates="Message")
+    """
+    status: Mapped["ProposalStatus"]
     departures_final: Mapped[bool] =db.mapped_column(db.Boolean)
     destination_final: Mapped[bool] =db.mapped_column(db.Boolean)
     possibleDates_final: Mapped[bool] =db.mapped_column(db.Boolean)
@@ -63,13 +73,14 @@ class TripProposal(db.Model):
 
 
 class TripProposalParticipant(db.Model):
-    id: Mapped[int] =db.mapped_column(primary_key=True)
-    userId: Mapped[int] =db.mapped_column(db.ForeignKey("User.id"))
-    user: Mapped["User"] = db.relationship(back_populates="User")
-    tripId: Mapped[int] =db.mapped_column(db.ForeignKey("TripProposal.id"))
-    trip: Mapped["TripProposal"] = db.relationship(back_populates="TripProposal")
-    canEdit: Mapped[bool] =db.mapped_column(db.Boolean)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    userId: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user: Mapped["User"] = relationship("User")
+    tripId: Mapped[int] = mapped_column(ForeignKey("trip_proposal.id"))
+    trip: Mapped["TripProposal"] = relationship("TripProposal")
+    canEdit: Mapped[bool] = mapped_column(Boolean)
 
+"""
 class Meetup(db.Model):
     id: Mapped[int] =db.mapped_column(primary_key=True)
     meetupTime: Mapped[datetime.datetime] =db.mapped_column(db.DateTime(timezone=True))
@@ -95,9 +106,4 @@ class DateProposal(db.Model):
     dateFrom: Mapped[datetime.datetime] =db.mapped_column(db.DateTime(timezone=True))
     dateTo: Mapped[datetime.datetime] =db.mapped_column(db.DateTime(timezone=True))
 
-
-class ProposalStatus(db.enum.Enum):
-    open = 1
-    closed_to_new_participants = 2
-    finalized = 3
-    cancelled = 4
+"""

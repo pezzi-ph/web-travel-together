@@ -1,4 +1,4 @@
-% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 <section>
@@ -14,7 +14,7 @@
         <tr>
             <td>{{proposal.name}}</td>
             <td>{{proposal.budget}}</td>
-            <td>{{proposal.status}}</td>
+            <td>{{proposal.status.name}}</td>
         </tr>
         {% endfor %}
 

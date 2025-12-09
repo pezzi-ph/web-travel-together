@@ -1,5 +1,6 @@
 ﻿{% extends "base.html" %}
 {% block content %}
 <h1>Welcome, {{ user.name }}!</h1>
+<a class="btn" href="{{ url_for('main.createTrip') }}">Create a Trip</a>
 <p>This will become your trip dashboard.</p>
 {% endblock %}
