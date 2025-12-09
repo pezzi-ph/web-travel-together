@@ -41,11 +41,33 @@ def createTrip():
         name = request.form["name"]
         budget = request.form["budget"]
         maxMembers = request.form["maxMembers"]
+        destination = request.form["destination"]
 
-        newTrip = TripProposal(name=name, budget=budget, maxMembers=maxMembers, status=ProposalStatus.open, departures_final=False, destination_final=False, possibleDates_final=False, activities_final=False)
+        newDestination = Location(name=destination)
+        db.session.add(newDestination)
+        db.session.commit()
+
+        newTrip = TripProposal(name=name, budget=budget, maxMembers=maxMembers, destinationId=newDestination.id, status=ProposalStatus.open, departures_final=False, destination_final=False, possibleDates_final=False, activities_final=False)
         db.session.add(newTrip)
         db.session.commit()
         flash("trip created successfully")
         return render_template("main/index.html", user=current_user)
 
     return render_template("trips/createTrip.html")
+
+
+@bp.route("/trip/<int:trip_proposal_id>", methods=["GET", "POST"])
+@login_required
+def tripDetails(trip_proposal_id):
+    if request.method == "POST":
+        newParticipant = TripProposalParticipant(tripId=trip_proposal_id, userId=current_user.id, canEdit=False)
+        db.session.add(newParticipant)
+        db.session.commit()
+        flash("successfully signed up for trip")
+
+    queryTrip = db.select(TripProposal).where(TripProposal.id == trip_proposal_id)
+    trip_proposal = db.session.execute(queryTrip).scalar()
+    queryParticipant = db.Select(TripProposalParticipant).where(TripProposalParticipant.tripId == trip_proposal_id).where(TripProposalParticipant.userId == current_user.id)
+    participant = db.session.execute(queryParticipant).scalar()
+    return render_template("trips/tripDetails.html", trip=trip_proposal, exists=(participant is not None))
+

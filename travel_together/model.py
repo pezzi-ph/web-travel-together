@@ -50,22 +50,25 @@ class ProposalStatus(enum.Enum):
     finalized = 3
     cancelled = 4
 
-
+class Location(db.Model):
+    id: Mapped[int] =db.mapped_column(primary_key=True)
+    name: Mapped[str] =db.mapped_column(db.String(64))
+    trip_destinations: Mapped[List["TripProposal"]] = db.relationship(back_populates="destination")
 
 class TripProposal(db.Model):
     id: Mapped[int] =db.mapped_column(primary_key=True)
     name: Mapped[str] = db.mapped_column(db.String(64))
     budget: Mapped[int] =db.mapped_column(db.Integer)
     maxMembers: Mapped[int] =db.mapped_column(db.Integer)
-    """
-    departures: Mapped[List["Location"]] = db.relationship(back_populates="Location")
-    destinationId:  Mapped[int] =db.mapped_column(db.ForeignKey("Location.id"))
-    destination: Mapped["Location"] = db.relationship(back_populates="Location")
-    possibleDates: Mapped[List["DateProposal"]] = db.relationship(back_populates="Location")
-    activities: Mapped[List["Activity"]] = db.relationship(back_populates="Activity")
-    messages: Mapped[List["Message"]] = db.relationship(back_populates="Message")
-    """
+    destinationId:  Mapped[int] =db.mapped_column(db.ForeignKey("location.id"))
+    destination: Mapped["Location"] = db.relationship(back_populates="trip_destinations")
     status: Mapped["ProposalStatus"]
+    """
+        departures: Mapped[List["Location"]] = db.relationship(back_populates="Location")
+        possibleDates: Mapped[List["DateProposal"]] = db.relationship(back_populates="Location")
+        activities: Mapped[List["Activity"]] = db.relationship(back_populates="Activity")
+        messages: Mapped[List["Message"]] = db.relationship(back_populates="Message")
+    """
     departures_final: Mapped[bool] =db.mapped_column(db.Boolean)
     destination_final: Mapped[bool] =db.mapped_column(db.Boolean)
     possibleDates_final: Mapped[bool] =db.mapped_column(db.Boolean)
@@ -95,10 +98,6 @@ class Activity(db.Model):
     id: Mapped[int] =db.mapped_column(primary_key=True)
     name: Mapped[str] =db.mapped_column(db.String(64))
     description: Mapped[str] =db.mapped_column(db.String(256))
-
-class Location(db.Model):
-    id: Mapped[int] =db.mapped_column(primary_key=True)
-    name: Mapped[str] =db.mapped_column(db.String(64))
 
 
 class DateProposal(db.Model):

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section>
+ <p><b>Name:</b> {{ trip.name }}</p>
+ <p><b>Budget:</b> {{ trip.budget }}</p>
+</section>
+
+{% if not exists %}
+<form method="POST" >
+    <button type="submit" name="signUp">Sign up for the trip</button>
+</form>
+{% else %}
+<p>Already part of the trip</p>
+{% endif %}
+
+{% endblock %}

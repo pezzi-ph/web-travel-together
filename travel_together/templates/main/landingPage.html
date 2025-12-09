@@ -9,12 +9,15 @@
             <th>name</th>
             <th>budget</th>
             <th>status</th>
+            <th>destination</th>
         </tr>
         {% for proposal in trip_proposals %}
         <tr>
             <td>{{proposal.name}}</td>
             <td>{{proposal.budget}}</td>
             <td>{{proposal.status.name}}</td>
+            <td>{{proposal.destination.name }}</td>
+            <td><a href="{{ url_for('main.tripDetails', trip_proposal_id=proposal.id) }}">Details</a></td>
         </tr>
         {% endfor %}
 
