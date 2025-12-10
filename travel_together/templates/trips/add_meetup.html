@@ -30,10 +30,13 @@
 
 
     <button type="submit">
-        Create trip
+        Create meetup
     </button>
 </form>
 
+<p>
+    <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">← Back to trip details</a>
+</p>
 <p>
     <a href="{{ url_for('main.index') }}">← Back to all trips</a>
 </p>
