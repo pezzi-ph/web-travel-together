@@ -12,7 +12,6 @@
   {% if trips %}
 <ul>
     {% for trip in trips %}
-    {% if trip.status.value == 1 %} {# only show open trips #}
     <li>
         <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">{{ trip.name }}</a>
         – {{ trip.destination_location.name }}
@@ -26,10 +25,28 @@
         </small>
         {% endif %}
     </li>
-    {% endif %}
     {% endfor %}
 </ul>
   {% else %}
 <p>No trips yet. Why not create one?</p>
   {% endif %}
+
+    <h2>My trips</h2>
+
+    {% if my_trips %}
+    <ul>
+        {% for trip in my_trips %}
+        <li>
+            <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">
+                {{ trip.name }}
+            </a>
+            – {{ trip.destination_location.name if trip.destination_location else "No destination yet" }}
+            (max {{ trip.max_members }} people)
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No trips yet. Why not <a href="{{ url_for('main.create_trip') }}">create one</a>?</p>
+    {% endif %}
+</section>
 {% endblock %}

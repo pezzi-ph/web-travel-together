@@ -27,8 +27,9 @@ bp = Blueprint("main", __name__)
 @bp.route("/")
 @login_required
 def index():
-    trips = db.session.execute(db.select(TripProposal)).scalars().all()
-    return render_template("main/index.html", trips=trips)
+    open_trips = db.session.execute(db.select(TripProposal).where(TripProposal.status == ProposalStatus.open)).scalars().all()
+    my_trips = db.session.execute(db.select(TripProposal).join(TripProposalParticipant).filter_by(user_id=current_user.id, can_edit=True)).scalars().all()
+    return render_template("main/index.html", trips=open_trips, my_trips=my_trips)
 
 
 # ---------------------------------------------------------
@@ -337,6 +338,10 @@ def edit_trip(trip_id):
 
     if participation is None or not participation.can_edit:
         abort(403)
+
+    if trip.status == ProposalStatus.finalized or trip.status == ProposalStatus.cancelled:
+        flash("Trip already closed.")
+        return trip_detail(trip_id)
 
     if request.method == "POST":
         # ----- BASIC FIELDS -----
