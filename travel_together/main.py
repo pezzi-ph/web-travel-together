@@ -22,14 +22,63 @@ from .model import (
 bp = Blueprint("main", __name__)
 
 # ---------------------------------------------------------
-# HOME PAGE
+# HOME PAGE: only trips that still accept new participants
+# + filters by destination and budget
 # ---------------------------------------------------------
 @bp.route("/")
 @login_required
 def index():
-    open_trips = db.session.execute(db.select(TripProposal).where(TripProposal.status == ProposalStatus.open)).scalars().all()
-    my_trips = db.session.execute(db.select(TripProposal).join(TripProposalParticipant).filter_by(user_id=current_user.id, can_edit=True)).scalars().all()
-    return render_template("main/index.html", trips=open_trips, my_trips=my_trips)
+    # Base: only open trips
+    trips = (
+        db.session.execute(
+            db.select(TripProposal)
+            .where(TripProposal.status == ProposalStatus.open)
+            .order_by(TripProposal.id.desc())
+        )
+        .scalars()
+        .all()
+    )
+
+    # --- Read filters from query string ---
+    q = request.args.get("q", "").strip()  # destination search
+    min_budget = request.args.get("min_budget", "").strip()
+    max_budget = request.args.get("max_budget", "").strip()
+
+    # Destination filter (simple Python filtering)
+    if q:
+        q_low = q.lower()
+        filtered = []
+        for t in trips:
+            dest_name = t.destination_location.name if t.destination_location else ""
+            if q_low in dest_name.lower():
+                filtered.append(t)
+        trips = filtered
+
+    # Budget filter
+    try:
+        min_b = int(min_budget) if min_budget else None
+    except ValueError:
+        min_b = None
+
+    try:
+        max_b = int(max_budget) if max_budget else None
+    except ValueError:
+        max_b = None
+
+    if min_b is not None:
+        trips = [t for t in trips if t.budget is not None and t.budget >= min_b]
+
+    if max_b is not None:
+        trips = [t for t in trips if t.budget is not None and t.budget <= max_b]
+
+    return render_template(
+        "main/index.html",
+        trips=trips,
+        page_title="Join a food trip",
+        show_only_open=True,
+    )
+
+
 
 
 # ---------------------------------------------------------
@@ -557,3 +606,26 @@ def create_meetup(trip_id):
     return render_template("trips/add_meetup.html", trip=trip)
 
 
+# ---------------------------------------------------------
+# MY TRIPS: all trips I participate in
+# ---------------------------------------------------------
+@bp.route("/my-trips")
+@login_required
+def my_trips():
+    trips = (
+        db.session.execute(
+            db.select(TripProposal)
+            .join(TripProposalParticipant)
+            .where(TripProposalParticipant.user_id == current_user.id)
+            .order_by(TripProposal.id.desc())
+        )
+        .scalars()
+        .all()
+    )
+
+    return render_template(
+        "main/index.html",
+        trips=trips,
+        page_title="My trips",
+        show_only_open=False,
+    )
