@@ -132,8 +132,10 @@
     </article>
     {% endfor %}
 </div>
-{% else %}
+{% elif show_only_open %}
 <p>No trips to show yet. Try adjusting your filters or create a new trip!</p>
+{% else %}
+<p>No trips yet. You can <a href="{{ url_for('main.create_trip') }}">create one</a></p>
 {% endif %}
 
 {% endblock %}
