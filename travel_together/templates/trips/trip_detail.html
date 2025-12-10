@@ -54,41 +54,77 @@
 </ul>
 
 
+{% if trip.participants|length > 0 %}
+<h3>Participants:</h3>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Email</th>
+        {% if is_editor %}
+        <th>Permissions</th>
+        {% endif %}
+    </tr>
+    {% for participant in trip.participants %}
+    <tr>
+        <td style="padding-right: 20px">{{participant.user.name}}</td>
+        <td style="padding-right: 20px">{{participant.user.email}}</td>
+
+        {% if is_editor and not participant.can_edit %}
+        <td>
+            <form method="post" style="margin: 0"
+                  action="{{ url_for('main.make_editor', trip_id=trip.id, participant_id=participant.id) }}">
+                <button type="submit" style="margin: 0">Make Editor</button>
+            </form>
+        </td>
+
+        {% elif is_editor and participant.can_edit%}
+        <td style="text-align: center">
+            is editor
+        </td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+
+{% endif %}
+
+
 <hr>
 
-  {# JOIN / LEAVE MESSAGES #}
-  {% if can_join %}
+{# JOIN / LEAVE MESSAGES #}
+{% if can_join %}
 <form method="post" action="{{ url_for('main.join_trip', trip_id=trip.id) }}">
     <button type="submit">Join this trip</button>
 </form>
-  {% else %}
-    {% if is_participant %}
+{% else %}
+{% if is_participant %}
 <p>You already joined this trip.</p>
-    {% endif %}
-    {% if not can_leave and is_participant %}
+<p>
+    <a href="{{ url_for('main.message_board', trip_id=trip.id) }}">Chat with the others</a>
+</p>
+{% endif %}
+{% if not can_leave and is_participant %}
 <p>
     You are currently the only editor of this trip, so you cannot leave. Give edit
     rights to another participant first.
 </p>
-    {% endif %}
-  {% endif %}
+{% endif %}
+{% endif %}
 
-  {% if can_leave %}
+{% if can_leave %}
 <form method="post" action="{{ url_for('main.leave_trip', trip_id=trip.id) }}">
     <button type="submit">Leave this trip</button>
 </form>
-  {% endif %}
+{% endif %}
 
-  {% if is_editor and trip.status.value in (1, 2) %}
+{% if is_editor and trip.status.value in (1, 2) %}
 <p>
     <a href="{{ url_for('main.edit_trip', trip_id=trip.id) }}">Edit</a>
 </p>
 <p>
     <a href="{{ url_for('main.create_meetup', trip_id=trip.id) }}">Create Meetup</a>
 </p>
-  {% endif %}
+{% endif %}
 
-<p>
-    <a href="{{ url_for('main.message_board', trip_id=trip.id) }}">Chat with the others</a>
-</p>
+
 {% endblock %}
