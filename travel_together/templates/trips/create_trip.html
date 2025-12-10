@@ -1,120 +1,180 @@
 ﻿<script>
     function add() {
         document.getElementById("activities")
-            .insertAdjacentHTML("beforeend", '<div class="row"><input type="text" name="activities[]"><button type="button" onclick="remove(this)">-</button></div>');
-    }
-        function addDates() {
-        document.getElementById("dates")
-            .insertAdjacentHTML("beforeend", '<div class="row"><input type="datetime-local" name="possible_departure_dates[]"><input type="datetime-local" name="possible_return_dates[]"><button type="button" onclick="remove(this)">-</button></div>');
+            .insertAdjacentHTML(
+                "beforeend",
+                '<div class="row">' +
+                '<input type="text" name="activities[]">' +
+                '<button type="button" onclick="remove(this)">-</button>' +
+                '</div>'
+            );
     }
 
-    function remove(x){
+    function addDates() {
+        document.getElementById("dates")
+            .insertAdjacentHTML(
+                "beforeend",
+                '<div class="row">' +
+                '<input type="datetime-local" name="possible_departure_dates[]">' +
+                '<input type="datetime-local" name="possible_return_dates[]">' +
+                '<button type="button" onclick="remove(this)">-</button>' +
+                '</div>'
+            );
+    }
+
+    function remove(x) {
         x.parentElement.remove();
     }
 </script>
 
 {% extends "base.html" %}
 
-{% block title %}Create a new trip – TasteTogether{% endblock %}
+{% block title %}
+    {% if trip.id is none %}
+        Create a new trip – TasteTogether
+    {% else %}
+        Edit trip – TasteTogether
+    {% endif %}
+{% endblock %}
 
 {% block content %}
-    <div class="page-header">
-        <h1>Create a new food trip</h1>
-        <p class="subtitle">
-            Plan a TasteTogether adventure with other food lovers.
-        </p>
+<div class="page-header">
+    {% if trip.id is none %}
+    <h1>Create a new food trip</h1>
+    <p class="subtitle">
+        Plan a TasteTogether adventure with other food lovers.
+    </p>
+    {% else %}
+    <h1>Edit your food trip</h1>
+    <p class="subtitle">
+        Update the details of your TasteTogether adventure.
+    </p>
+    {% endif %}
+</div>
+
+<!-- When creating, action = /trips/new
+     When editing, action = /trips/<id>/edit (because we reuse this template) -->
+<form method="post" class="form-card">
+
+    <div class="form-group">
+        <label for="name">Trip name</label>
+        <input type="text"
+               id="name"
+               name="name"
+               value="{{ trip.name or '' }}"
+               required>
     </div>
 
-    <form method="post" class="form-card">
-        <div class="form-group">
-            <label for="name">Trip name</label>
-            <input type="text" id="name" name="name" value="{{ trip.name or "" }}" required>
-        </div>
+    <div class="form-group">
+        <label for="departure">Departure city</label>
+        <input type="text"
+               id="departure"
+               name="departure"
+               value="{{ trip.departure_location.name if trip.departure_location else '' }}"
+               required>
+    </div>
 
-        <div class="form-group">
-            <label for="departure">Departure city</label>
-            <input type="text" id="departure" name="departure" value="{{ trip.departure_location.name or "" }}"
-                   required>
-        </div>
+    <div class="form-group">
+        <label for="destination">Destination city</label>
+        <input type="text"
+               id="destination"
+               name="destination"
+               value="{{ trip.destination_location.name if trip.destination_location else '' }}"
+               required>
+    </div>
 
-        <div class="form-group">
-            <label for="destination">Destination city</label>
-            <input type="text" id="destination" name="destination" value="{{ trip.destination_location.name or "" }}"
-                   required>
-        </div>
+    <div class="form-group">
+        <label for="budget">Approx. budget (EUR)</label>
+        <input type="number"
+               id="budget"
+               name="budget"
+               min="0"
+               step="50"
+               value="{{ trip.budget or 0 }}">
+    </div>
 
-        <div class="form-group">
-            <label for="budget">Approx. budget (EUR)</label>
-            <input type="number" id="budget" name="budget" min="0" step="50" value="{{ trip.budget or 0 }}">
-        </div>
+    <div class="form-group">
+        <label for="max_members">Maximum participants</label>
+        <input type="number"
+               id="max_members"
+               name="max_members"
+               min="1"
+               value="{{ trip.max_members or 1 }}"
+               required>
+    </div>
 
-        <div class="form-group">
-            <label for="max_members">Maximum participants</label>
-            <input type="number" id="max_members" name="max_members" min="1" value="{{ trip.max_members or 0 }}"
-                   required>
-        </div>
+    <!-- Activities -->
+    <div class="form-group" id="activities">
+        <label>Activities</label>
 
-
-        <div class="form-group" id="activities">
-            <label for="activities">Activities</label>
-            {% if trip.activities |length ==0 %}
-                <div class="row">
-                    <input type="text" name="activities[]">
-                    <button type="button" onclick="remove(this)">-</button>
-                </div>            {% endif %}
-            {% for act in trip.activities %}
-                <div class="row">
-                    <input type="text" name="activities[]" value="{{ act.name }}">
-                    <button type="button" onclick="remove(this)">-</button>
-                </div>
-            {% endfor %}
-
-        </div>
-        <button type="button" onclick="add()">Add activity</button>
-
-
-
-        <div class="form-group" id="dates">
-            <label for="dates">Possible Dates</label>
-            {% if trip.possible_dates |length ==0 %}
-                <div class="row">
-                    <input type="datetime-local" name="possible_departure_dates[]">
-                    <input type="datetime-local" name="possible_return_dates[]">
-                    <button type="button" onclick="remove(this)">-</button>
-                </div>
-            {% endif %}
-            {% for date in trip.possible_dates %}
-                <div class="row">
-                    <input type="datetime-local" name="possible_departure_dates[]" value="{{ date.departure_date }}">
-                    <input type="datetime-local" name="possible_return_dates[]" value="{{ date.return_date }}">
-                    <button type="button" onclick="remove(this)">-</button>
-                </div>
-            {% endfor %}
-
-        </div>
-        <button type="button" onclick="addDates()">Add possible dates</button>
-
-
-        {% if trip.id is not none %}
-        <div class="form-group">
-            <label for="status">Status</label>
-            <select name="status">
-                <option value="1" {{'selected' if trip.status.value==1}}>open</option>
-                <option value="2" {{'selected' if trip.status.value==2}}>closed to new participants</option>
-                <option value="3" {{'selected' if trip.status.value==3}}>finalized</option>
-                <option value="4" {{'selected' if trip.status.value==4}}>cancelled</option>
-            </select>
+        {% if trip.activities|length == 0 %}
+        <div class="row">
+            <input type="text" name="activities[]">
+            <button type="button" onclick="remove(this)">-</button>
         </div>
         {% endif %}
 
-        <button type="submit">{% if trip.id is none %}Create trip{% else %}Edit trip{% endif %}</button>
-    </form>
+        {% for act in trip.activities %}
+        <div class="row">
+            <input type="text" name="activities[]" value="{{ act.name }}">
+            <button type="button" onclick="remove(this)">-</button>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" onclick="add()">Add activity</button>
+
+    <!-- Possible dates -->
+    <div class="form-group" id="dates">
+        <label>Possible Dates</label>
+
+        {% if trip.possible_dates|length == 0 %}
+        <div class="row">
+            <input type="datetime-local" name="possible_departure_dates[]">
+            <input type="datetime-local" name="possible_return_dates[]">
+            <button type="button" onclick="remove(this)">-</button>
+        </div>
+        {% endif %}
+
+        {% for date in trip.possible_dates %}
+        <div class="row">
+            <input type="datetime-local"
+                   name="possible_departure_dates[]"
+                   value="{{ date.departure_date.strftime('%Y-%m-%dT%H:%M') if date.departure_date else '' }}">
+            <input type="datetime-local"
+                   name="possible_return_dates[]"
+                   value="{{ date.return_date.strftime('%Y-%m-%dT%H:%M') if date.return_date else '' }}">
+            <button type="button" onclick="remove(this)">-</button>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="button" onclick="addDates()">Add possible dates</button>
 
 
 
 
-    <p>
-        <a href="{{ url_for('main.index') }}">← Back to all trips</a>
-    </p>
+    <!-- Status only when editing an existing trip -->
+    {% if trip.id is not none %}
+    <div class="form-group">
+        <label for="status">Status</label>
+        <select name="status" id="status">
+            <option value="1" {{ 'selected' if trip.status.value == 1 }}>open</option>
+            <option value="2" {{ 'selected' if trip.status.value == 2 }}>closed to new participants</option>
+            <option value="3" {{ 'selected' if trip.status.value == 3 }}>finalized</option>
+            <option value="4" {{ 'selected' if trip.status.value == 4 }}>cancelled</option>
+        </select>
+    </div>
+    {% endif %}
+
+    <button type="submit">
+        {% if trip.id is none %}
+        Create trip
+        {% else %}
+        Save changes
+        {% endif %}
+    </button>
+</form>
+
+<p>
+    <a href="{{ url_for('main.index') }}">← Back to all trips</a>
+</p>
 {% endblock %}
-

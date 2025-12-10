@@ -1,25 +1,35 @@
 ﻿{% extends "base.html" %}
 
+{% block title %}TasteTogether{% endblock %}
+
 {% block content %}
-<h1>Welcome, {{ current_user.name }}!</h1>
+<div class="page-header">
+    <h1>Welcome, {{ current_user.name }}!</h1>
+</div>
 
-<section class="trip-list">
-    <h2>Open trips</h2>
+<h2>Open trips</h2>
 
-    {% if trips %}
-    <ul>
-        {% for trip in trips %}
-        <li>
-            <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">
-                {{ trip.name }}
-            </a>
-            – {{ trip.destination_location.name if trip.destination_location else "No destination yet" }}
-            (max {{ trip.max_members }} people)
-        </li>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p>No trips yet. Why not <a href="{{ url_for('main.create_trip') }}">create one</a>?</p>
+  {% if trips %}
+<ul>
+    {% for trip in trips %}
+    {% if trip.status.value == 1 %} {# only show open trips #}
+    <li>
+        <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">{{ trip.name }}</a>
+        – {{ trip.destination_location.name }}
+        ({{ trip.participants|length }}/{{ trip.max_members }} people)
+
+        {% if trip.activities %}
+        <br>
+        <small>
+            Activities:
+            {{ trip.activities | map(attribute='name') | join(', ') }}
+        </small>
+        {% endif %}
+    </li>
     {% endif %}
-</section>
+    {% endfor %}
+</ul>
+  {% else %}
+<p>No trips yet. Why not create one?</p>
+  {% endif %}
 {% endblock %}
