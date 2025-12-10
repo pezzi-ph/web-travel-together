@@ -12,7 +12,9 @@ def create_app():
 
     # Configuration
     app.config["SECRET_KEY"] = "dev"  # change later for production
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///travel_together.db"
+    app.config[
+        "SQLALCHEMY_DATABASE_URI"
+    ] = "mysql+pymysql://26_webapp_21:5IjS9piA@mysql.lab.it.uc3m.es/26_webapp_21a"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Initialize extensions
