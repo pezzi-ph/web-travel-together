@@ -95,6 +95,18 @@
         <button type="button" onclick="addDates()">Add possible dates</button>
 
 
+        {% if trip.id is not none %}
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select name="status">
+                <option value="1" {{'selected' if trip.status.value==1}}>open</option>
+                <option value="2" {{'selected' if trip.status.value==2}}>closed to new participants</option>
+                <option value="3" {{'selected' if trip.status.value==3}}>finalized</option>
+                <option value="4" {{'selected' if trip.status.value==4}}>cancelled</option>
+            </select>
+        </div>
+        {% endif %}
+
         <button type="submit">{% if trip.id is none %}Create trip{% else %}Edit trip{% endif %}</button>
     </form>
 

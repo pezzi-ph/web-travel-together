@@ -252,6 +252,7 @@ def edit_trip(trip_id):
         activities = request.form.getlist("activities[]")
         possible_departure_dates = request.form.getlist("possible_departure_dates[]")
         possible_return_dates = request.form.getlist("possible_return_dates[]")
+        status = request.form.get("status")
 
         new_dates = []
         for i, departure_date in enumerate(possible_departure_dates):
@@ -292,6 +293,7 @@ def edit_trip(trip_id):
         trip.max_members = max_members
         trip.activities = activities_new
         trip.possible_dates = new_dates
+        trip.status = ProposalStatus(int(status))
         db.session.commit()
         flash("Trip edited successfully!")
 
