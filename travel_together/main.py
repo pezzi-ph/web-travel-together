@@ -370,6 +370,33 @@ def leave_trip(trip_id: int):
 
 
 
+# ---------------------------------------------------------
+# MAKE EDITOR
+# ---------------------------------------------------------
+@bp.route("/trips/<int:trip_id>/make_editor/<int:participant_id>", methods=["POST"])
+@login_required
+def make_editor(trip_id, participant_id):
+    trip = TripProposal.query.get_or_404(trip_id)
+    my_participation = None
+    for p in trip.participants:
+        if p.user_id == current_user.id and p.can_edit:
+            my_participation = p
+            break
+    if my_participation is None:
+        flash("You are not allowed to edit this trips permissions.")
+        return trip_detail(trip_id)
+
+    participation = db.session.get(TripProposalParticipant, participant_id)
+    if participation is None:
+        abort(404)
+    participation.can_edit = True
+    db.session.commit()
+    flash("Updated permission")
+    return trip_detail(trip_id)
+
+
+
+
 
 # ---------------------------------------------------------
 # Edit A TRIP
@@ -492,6 +519,10 @@ def edit_trip(trip_id):
 def message_board(trip_id):
     trip = TripProposal.query.get_or_404(trip_id)
 
+    if trip.status == ProposalStatus.cancelled:
+        flash("Cannot chat in a cancelled trip.")
+        return redirect(url_for("main.index"))
+
     # Security check: only participants can see/post
     if not any(p.user_id == current_user.id for p in trip.participants):
         flash("You are not participating in this trip.")
@@ -517,7 +548,7 @@ def message_board(trip_id):
             )
             db.session.add(message)
             db.session.commit()
-            flash("Message posted.")
+            #flash("Message posted.")
 
         return redirect(url_for("main.message_board", trip_id=trip_id))
 

@@ -193,3 +193,15 @@ button {
     color: #721c24;
 }
 
+
+table, th, td {
+  border: 1px solid #8B1E3F;
+  border-collapse: collapse;
+}
+th {
+    background-color: #8B1E3F;
+    color: #FAF3E0
+}
+td {
+    height: 32px;
+}

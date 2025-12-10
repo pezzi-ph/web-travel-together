@@ -30,11 +30,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-    {% if trip.id is none %}
-        Create a new trip – TasteTogether
-    {% else %}
-        Edit trip – TasteTogether
-    {% endif %}
+{% if trip.id is none %}
+Create a new trip – TasteTogether
+{% else %}
+Edit trip – TasteTogether
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -150,8 +150,6 @@
     <button type="button" onclick="addDates()">Add possible dates</button>
 
 
-
-
     <!-- Status only when editing an existing trip -->
     {% if trip.id is not none %}
     <div class="form-group">
@@ -164,7 +162,7 @@
         </select>
     </div>
     {% endif %}
-<br>
+    <br>
     <button type="submit">
         {% if trip.id is none %}
         Create trip
@@ -173,6 +171,12 @@
         {% endif %}
     </button>
 </form>
+
+{% if trip.id is not none %}
+<p>
+    <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">← Back to trip details</a>
+</p>
+{% endif %}
 
 <p>
     <a href="{{ url_for('main.index') }}">← Back to all trips</a>
