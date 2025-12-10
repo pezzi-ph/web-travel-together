@@ -16,7 +16,7 @@ from .model import (
     TripProposal,
     TripProposalParticipant,
     Location,
-    ProposalStatus, Activity, Message, PossibleDates,
+    ProposalStatus, Activity, Message, PossibleDates, Meetup,
 )
 
 bp = Blueprint("main", __name__)
@@ -465,4 +465,49 @@ def message_board(trip_id):
         trip=trip,
         messages=trip.messages,
     )
+
+
+
+# ---------------------------------------------------------
+# TRIP CREATE MEETUP
+# ---------------------------------------------------------
+@bp.route("/trips/<int:trip_id>/createMeetup", methods=["GET", "POST"])
+@login_required
+def create_meetup(trip_id):
+    trip = TripProposal.query.get_or_404(trip_id)
+    my_participation = None
+    for p in trip.participants:
+        if p.user_id == current_user.id and p.can_edit:
+            my_participation = p
+            break
+    if my_participation is None:
+        flash("You cannot add meetups for this trip.")
+        return trip_detail(trip_id)
+    if request.method == "POST":
+        location = request.form.get("location")
+        meet_time = request.form.get("meet_time")
+        if not location or not meet_time:
+            flash("Location and meet time are required.")
+            return trip_detail(trip_id)
+
+        loc = Location.query.filter_by(name=location).first()
+        if not loc:
+            loc = Location(name=location)
+            db.session.add(loc)
+
+        try:
+            # HTML datetime-local gives e.g. "2025-12-10T20:35"
+            dt = datetime.fromisoformat(meet_time)
+        except ValueError:
+            flash("Invalid date format. Please enter valid dates.")
+            return trip_detail(trip_id)
+
+        meetup = Meetup(location=loc, meeting_date=dt, trip_id=trip_id)
+        db.session.add(meetup)
+        db.session.commit()
+        flash("Meetup created successfully.")
+        return trip_detail(trip_id)
+
+    return render_template("trips/add_meetup.html", trip=trip)
+
 

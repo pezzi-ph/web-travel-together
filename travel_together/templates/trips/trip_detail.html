@@ -40,14 +40,19 @@
     {% endif %}
 </ul>
 
-<p>
-    <strong>Status:</strong>
-    {% if trip.status.value == 1 %}open
-    {% elif trip.status.value == 2 %}closed to new participants
-    {% elif trip.status.value == 3 %}finalized
-    {% elif trip.status.value == 4 %}cancelled
+<h3>Meetups:</h3>
+<ul>
+    {% if trip.meetups|length > 0 %}
+    {% for m in trip.meetups %}
+    <li>
+        Meet in {{ m.location.name }} at {{ m.meeting_date.strftime("%Y-%m-%d %H:%M") }}
+    </li>
+    {% endfor %}
+    {% else %}
+    <li>–</li>
     {% endif %}
-</p>
+</ul>
+
 
 <hr>
 
@@ -77,6 +82,9 @@
   {% if is_editor and trip.status.value in (1, 2) %}
 <p>
     <a href="{{ url_for('main.edit_trip', trip_id=trip.id) }}">Edit</a>
+</p>
+<p>
+    <a href="{{ url_for('main.create_meetup', trip_id=trip.id) }}">Create Meetup</a>
 </p>
   {% endif %}
 

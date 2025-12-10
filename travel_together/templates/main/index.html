@@ -28,7 +28,7 @@
     {% endfor %}
 </ul>
   {% else %}
-<p>No trips yet. Why not create one?</p>
+<p>No trips yet. Why not <a href="{{ url_for('main.create_trip') }}">create one</a>?</p>
   {% endif %}
 
     <h2>My trips</h2>

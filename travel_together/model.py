@@ -81,6 +81,8 @@ class TripProposal(db.Model):
 
     possible_dates: Mapped[List["PossibleDates"]] = relationship("PossibleDates", back_populates="trip")
 
+    meetups: Mapped[List["Meetup"]] = relationship("Meetup", back_populates="trip")
+
 
 
 # -------------------------
@@ -124,3 +126,17 @@ class PossibleDates(db.Model):
 
     trip_id = mapped_column(ForeignKey("tripproposal.id"))
     trip = relationship("TripProposal", back_populates="possible_dates")
+
+
+# -------------------------
+# MEETUPS
+# -------------------------
+class Meetup(db.Model):
+    id = mapped_column(Integer, primary_key=True)
+    meeting_date = mapped_column(DateTime)
+
+    location_id = mapped_column(ForeignKey("location.id"))
+    location = relationship("Location",foreign_keys=[location_id])
+
+    trip_id = mapped_column(ForeignKey("tripproposal.id"))
+    trip = relationship("TripProposal", back_populates="meetups")
