@@ -273,17 +273,20 @@ def join_trip(trip_id):
     flash("You joined the trip!")
     return redirect(url_for("main.trip_detail", trip_id=trip.id))
 
-
 # ---------------------------------------------------------
 # LEAVE A TRIP
 # ---------------------------------------------------------
-
 @bp.route("/trips/<int:trip_id>/leave", methods=["POST"])
 @login_required
 def leave_trip(trip_id: int):
     trip = db.session.get(TripProposal, trip_id)
     if trip is None:
         abort(404)
+
+    # Once finalized/cancelled, trip is read-only: no leaving
+    if trip.status in (ProposalStatus.finalized, ProposalStatus.cancelled):
+        flash("This trip has been finalized or cancelled. Participants can no longer leave.")
+        return redirect(url_for("main.trip_detail", trip_id=trip.id))
 
     participation = TripProposalParticipant.query.filter_by(
         trip_id=trip.id,
@@ -445,7 +448,17 @@ def message_board(trip_id):
         flash("You are not participating in this trip.")
         return redirect(url_for("main.index"))
 
+    # Can this trip still accept new messages?
+    can_post = trip.status in (
+        ProposalStatus.open,
+        ProposalStatus.closed_to_new_participants,
+    )
+
     if request.method == "POST":
+        if not can_post:
+            flash("This trip has been finalized or cancelled. You can no longer post new messages.")
+            return redirect(url_for("main.message_board", trip_id=trip_id))
+
         message_text = request.form.get("message", "").strip()
         if message_text:
             message = Message(
@@ -464,7 +477,9 @@ def message_board(trip_id):
         "trips/message_board.html",
         trip=trip,
         messages=trip.messages,
+        can_post=can_post,
     )
+
 
 
 

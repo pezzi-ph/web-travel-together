@@ -1,22 +1,69 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
+
+{% block title %}Chat – {{ trip.name }}{% endblock %}
 
 {% block content %}
-    <h2>Chat</h2>
-    <div style="overflow-y: scroll; height: 55vh">
-        {% for message in messages %}
-            <div style="border-width: 1px">
-                <p><strong>from:</strong> {{ message.user.name }}</p>
-                <p><strong>at:</strong> {{ message.created_at }}</p>
-                <p> {{ message.text }}</p>
+<div class="page-header">
+    <h1>Chat for "{{ trip.name }}"</h1>
+    <p class="subtitle">
+        Coordinate with your TasteTogether group.
+    </p>
+</div>
+
+<div class="form-card">
+    <h2>Messages</h2>
+
+    {% if messages|length == 0 %}
+    <p>No messages yet. Start the conversation!</p>
+    {% else %}
+    <ul class="message-list">
+        {% for msg in messages | sort(attribute='created_at', reverse=True) %}
+        <li class="message-item">
+            <div class="message-header">
+                <strong>
+                    <a href="{{ url_for('main.profile', user_id=msg.author.id) }}">
+                        {{ msg.author.name }}
+                    </a>
+                </strong>
+                <span class="timestamp">
+                    {{ msg.created_at.strftime("%Y-%m-%d %H:%M") }}
+                </span>
             </div>
+            <p class="message-body">
+                {{ msg.text }}
+            </p>
+        </li>
         {% endfor %}
-    </div>
+    </ul>
+    {% endif %}
+</div>
 
+<div class="form-card">
+    {% if can_post %}
+    <h2>Post a new message</h2>
     <form method="post">
-
-        <div class="row">
-            <input type="text" name="message">
-            <button type="Submit">Send</button>
+        <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="3" required></textarea>
         </div>
+        <button type="submit">Send</button>
     </form>
+    {% else %}
+    <p class="subtitle">
+        This trip has been
+        {% if trip.status == trip.status.__class__.finalized %}
+        finalized
+        {% elif trip.status == trip.status.__class__.cancelled %}
+        cancelled
+        {% else %}
+        closed
+        {% endif %}.
+        The chat is now read-only.
+    </p>
+    {% endif %}
+</div>
+
+<p>
+    <a href="{{ url_for('main.trip_detail', trip_id=trip.id) }}">← Back to trip details</a>
+</p>
 {% endblock %}
