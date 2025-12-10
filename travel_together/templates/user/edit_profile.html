@@ -1,0 +1,31 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="page-section">
+    <h1>Edit your profile</h1>
+
+    <form method="post">
+        <div class="form-field">
+            <label for="name">Name</label>
+            <input id="name"
+                   name="name"
+                   type="text"
+                   required
+                   value="{{ user.name }}">
+        </div>
+
+        <div class="form-field">
+            <label for="bio">Bio</label>
+            <textarea id="bio"
+                      name="bio"
+                      rows="4"
+                      placeholder="Tell other foodies a bit about you...">{{ user.bio or "" }}</textarea>
+        </div>
+
+        <button type="submit" class="button primary">Save changes</button>
+        <a href="{{ url_for('main.profile', user_id=user.id) }}" class="button secondary">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}

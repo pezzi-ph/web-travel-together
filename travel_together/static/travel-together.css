@@ -1,9 +1,10 @@
 /* Global layout */
 body {
-    margin: 0;
+    margin: 2;
     font-family: Arial, sans-serif;
     background-color: #FAF3E0; /* cream */
     color: #2B2B2B;
+
 }
 
 /* Header */
@@ -85,4 +86,9 @@ button {
 /* Links inside content */
 .content a {
     color: #8B1E3F;
+}
+
+.row {
+  display:flex;
+  gap:10px;
 }

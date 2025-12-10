@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section>
+    <div>Hello {{current_user.name}}</div>
+
+    <table>
+        <tr>
+            <th>name</th>
+            <th>budget</th>
+            <th>status</th>
+        </tr>
+        {% for proposal in trip_proposals %}
+        <tr>
+            <td>{{proposal.name}}</td>
+            <td>{{proposal.budget}}</td>
+            <td>{{proposal.status.name}}</td>
+        </tr>
+        {% endfor %}
+
+    </table>
+</section>
+{% endblock %}

@@ -1,0 +1,94 @@
+﻿{% extends "base.html" %}
+
+{% block title %}{{ trip.name }} – TasteTogether{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ trip.name }}</h1>
+</div>
+
+<p><strong>Status:</strong> {{ trip.status.name }}</p>
+<p><strong>Departure:</strong> {{ trip.departure_location.name }}</p>
+<p><strong>Destination:</strong> {{ trip.destination_location.name }}</p>
+<p><strong>Budget:</strong> €{{ trip.budget }}</p>
+<p><strong>Max Members:</strong> {{ trip.max_members }}</p>
+<p><strong>Current Members:</strong> {{ trip.participants|length }}</p>
+
+<h3>Activities:</h3>
+<ul>
+    {% if trip.activities %}
+    {% for activity in trip.activities %}
+    <li>{{ activity.name }}</li>
+    {% endfor %}
+    {% else %}
+    <li>–</li>
+    {% endif %}
+</ul>
+
+<h3>Possible dates:</h3>
+<ul>
+    {% if trip.possible_dates %}
+    {% for d in trip.possible_dates %}
+    <li>
+        {{ d.departure_date.strftime("%Y-%m-%d %H:%M") }}
+        →
+        {{ d.return_date.strftime("%Y-%m-%d %H:%M") }}
+    </li>
+    {% endfor %}
+    {% else %}
+    <li>–</li>
+    {% endif %}
+</ul>
+
+<h3>Meetups:</h3>
+<ul>
+    {% if trip.meetups|length > 0 %}
+    {% for m in trip.meetups %}
+    <li>
+        Meet in {{ m.location.name }} at {{ m.meeting_date.strftime("%Y-%m-%d %H:%M") }}
+    </li>
+    {% endfor %}
+    {% else %}
+    <li>–</li>
+    {% endif %}
+</ul>
+
+
+<hr>
+
+  {# JOIN / LEAVE MESSAGES #}
+  {% if can_join %}
+<form method="post" action="{{ url_for('main.join_trip', trip_id=trip.id) }}">
+    <button type="submit">Join this trip</button>
+</form>
+  {% else %}
+    {% if is_participant %}
+<p>You already joined this trip.</p>
+    {% endif %}
+    {% if not can_leave and is_participant %}
+<p>
+    You are currently the only editor of this trip, so you cannot leave. Give edit
+    rights to another participant first.
+</p>
+    {% endif %}
+  {% endif %}
+
+  {% if can_leave %}
+<form method="post" action="{{ url_for('main.leave_trip', trip_id=trip.id) }}">
+    <button type="submit">Leave this trip</button>
+</form>
+  {% endif %}
+
+  {% if is_editor and trip.status.value in (1, 2) %}
+<p>
+    <a href="{{ url_for('main.edit_trip', trip_id=trip.id) }}">Edit</a>
+</p>
+<p>
+    <a href="{{ url_for('main.create_meetup', trip_id=trip.id) }}">Create Meetup</a>
+</p>
+  {% endif %}
+
+<p>
+    <a href="{{ url_for('main.message_board', trip_id=trip.id) }}">Chat with the others</a>
+</p>
+{% endblock %}

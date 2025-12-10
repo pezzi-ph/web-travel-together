@@ -1,0 +1,105 @@
+﻿# ---------------------------------------------------------
+# EDIT TRIP
+# ---------------------------------------------------------
+@bp.route("/trips/<int:trip_id>
+    /edit", methods=["GET", "POST"])
+    @login_required
+    def edit_trip(trip_id):
+    trip = TripProposal.query.get_or_404(trip_id)
+
+    # Ensure user is a participant
+    participation = TripProposalParticipant.query.filter_by(
+    trip_id=trip_id,
+    user_id=current_user.id
+    ).first()
+
+    if participation is None:
+    flash("You are not a participant of this trip.")
+    return redirect(url_for("main.trip_detail", trip_id=trip_id))
+
+    # Ensure user has editing rights
+    if not participation.can_edit:
+    flash("You do not have permission to edit this trip.")
+    return redirect(url_for("main.trip_detail", trip_id=trip_id))
+
+    if request.method == "POST":
+    # ------------------------------
+    # BASIC FIELDS
+    # ------------------------------
+    name = request.form.get("name", "").strip()
+    departure = request.form.get("departure", "").strip()
+    destination = request.form.get("destination", "").strip()
+    budget = request.form.get("budget")
+    max_members = request.form.get("max_members")
+    status = request.form.get("status")
+
+    if not name or not departure or not destination:
+    flash("Name, departure, and destination cannot be empty.")
+    return redirect(url_for("main.edit_trip", trip_id=trip_id))
+
+    # Get/create departure location
+    dep_loc = Location.query.filter_by(name=departure).first()
+    if not dep_loc:
+    dep_loc = Location(name=departure)
+    db.session.add(dep_loc)
+
+    # Get/create destination location
+    dest_loc = Location.query.filter_by(name=destination).first()
+    if not dest_loc:
+    dest_loc = Location(name=destination)
+    db.session.add(dest_loc)
+
+    trip.name = name
+    trip.departure_location = dep_loc
+    trip.destination_location = dest_loc
+    trip.budget = int(budget) if budget else 0
+    trip.max_members = int(max_members) if max_members else trip.max_members
+    trip.status = ProposalStatus(int(status))
+
+    # ------------------------------
+    # ACTIVITIES
+    # ------------------------------
+    activity_names = request.form.getlist("activities[]")
+
+    # Remove old activities
+    trip.activities.clear()
+
+    # Add updated ones
+    for act in activity_names:
+    if act.strip():
+    trip.activities.append(Activity(name=act.strip()))
+
+    # ------------------------------
+    # POSSIBLE DATES
+    # ------------------------------
+    dep_dates = request.form.getlist("possible_departure_dates[]")
+    ret_dates = request.form.getlist("possible_return_dates[]")
+
+    # Remove old dates
+    trip.possible_dates.clear()
+
+    for i in range(len(dep_dates)):
+    dep_str = dep_dates[i]
+    ret_str = ret_dates[i] if i < len(ret_dates) else ""
+
+    if not dep_str or not ret_str:
+    continue
+
+    try:
+    dep_dt = datetime.fromisoformat(dep_str)
+    ret_dt = datetime.fromisoformat(ret_str)
+    except ValueError:
+    flash("Invalid date format.")
+    return redirect(url_for("main.edit_trip", trip_id=trip_id))
+
+    trip.possible_dates.append(
+    PossibleDates(departure_date=dep_dt, return_date=ret_dt)
+    )
+
+    # Save all edits
+    db.session.commit()
+    flash("Trip updated successfully!")
+    return redirect(url_for("main.trip_detail", trip_id=trip.id))
+
+    # GET request — show edit form
+    return render_template("trips/create_trip.html", trip=trip)

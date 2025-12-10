@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Chat</h2>
+    <div style="overflow-y: scroll; height: 55vh">
+        {% for message in messages %}
+            <div style="border-width: 1px">
+                <p><strong>from:</strong> {{ message.user.name }}</p>
+                <p><strong>at:</strong> {{ message.created_at }}</p>
+                <p> {{ message.text }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <form method="post">
+
+        <div class="row">
+            <input type="text" name="message">
+            <button type="Submit">Send</button>
+        </div>
+    </form>
+{% endblock %}
